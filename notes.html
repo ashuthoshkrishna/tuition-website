@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes - Ashuthosh Classes</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+body { font-family:'Poppins',sans-serif; background:#f7f9fc; margin:0; padding:0; color:#333;}
+header.site-header { background:#2c3e50; color:white; padding:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;}
+.logo { font-size:1.6rem; font-weight:600;}
+nav.main-nav { display:flex; gap:15px; flex-wrap:wrap;}
+nav.main-nav a { color:white; text-decoration:none; font-weight:500;}
+nav.main-nav a:hover { text-decoration:underline;}
+.hero-section {
+  position: relative;
+  text-align: center;
+  padding: 60px 20px;
+  background-image: url('https://images.unsplash.com/photo-1584697964192-6e4e04c01240?auto=format&fit=crop&w=1470&q=80');
+  background-size: cover;
+  background-position: center;
+  color: white;
+}
+.hero-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* overlay for readability */
+  z-index: 1;
+}
+.hero-section h1,
+.hero-section p {
+  position: relative;
+  z-index: 2;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+}
+.notes-section { padding:50px 20px; max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:30px; }
+.note { background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 15px rgba(0,0,0,0.1); transition:transform 0.3s; }
+.note:hover { transform:scale(1.05); }
+.note img { width:100%; height:180px; object-fit:cover; }
+.note-content { padding:15px; text-align:center; }
+.note-content h3 { margin:0 0 10px; font-size:1.2rem; }
+.btn-download { padding:10px 20px; background:#2c3e50; color:white; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; }
+.btn-download:hover { background:#1f2a38; }
+.upload-section { margin-top:40px; text-align:center; }
+.upload-section input { margin-bottom:10px; padding:10px; border-radius:6px; border:1px solid #2c3e50; width:250px; }
+.upload-section button { padding:10px 20px; border:none; border-radius:6px; background:#2c3e50; color:white; cursor:pointer; }
+.upload-section button:hover { background:#1f2a38; }
+footer.site-footer { background:#2c3e50; color:white; text-align:center; padding:20px; margin-top:50px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">Ashuthosh Classes</div>
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="classes.html">Classes</a>
+    <a href="notes.html">Notes</a>
+    <a href="register.html">Register</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</header>
+
+<section class="hero-section">
+  <h1>Study Notes & Resources</h1>
+  <p>Upload and access high-quality notes. Only registered students can download materials.</p>
+</section>
+
+<section class="notes-section" id="notesContainer">
+  <!-- Notes will appear here -->
+</section>
+
+<div class="upload-section" id="adminUpload" style="display:none;">
+  <h2>Upload New Note</h2>
+  <input type="text" id="noteTitle" placeholder="Note Title" /><br/>
+  <input type="file" id="noteFile" /><br/>
+  <input type="text" id="noteImage" placeholder="Thumbnail Image URL (optional)" /><br/>
+  <button id="uploadBtn">Upload Note</button>
+</div>
+
+<footer class="site-footer">
+  &copy; 2025 Ashuthosh Classes. All rights reserved.
+</footer>
+
+<script>
+// Admin & allowed students
+const adminEmail = "ashuthoshkrishna944@gmail.com";
+const allowedStudents = ["student1@example.com","student2@example.com"];
+let userEmail = localStorage.getItem("userEmail") || prompt("Enter your email to continue:");
+
+localStorage.setItem("userEmail", userEmail); // save email
+
+const notesContainer = document.getElementById("notesContainer");
+const adminUploadDiv = document.getElementById("adminUpload");
+
+// Load notes from localStorage
+let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+
+// Display notes to allowed users
+if(userEmail === adminEmail){
+  adminUploadDiv.style.display = "block";
+  displayNotes();
+} else if(allowedStudents.includes(userEmail)){
+  displayNotes();
+} else {
+  alert("You are not allowed to access notes. Contact admin.");
+  notesContainer.innerHTML = "<p style='text-align:center; color:red; font-weight:bold;'>Access Denied</p>";
+}
+
+// Function to display notes
+function displayNotes(){
+  notesContainer.innerHTML = "";
+  notes.forEach(n => {
+    const div = document.createElement("div");
+    div.className = "note";
+    div.innerHTML = `
+      <img src="${n.img}" alt="${n.title}">
+      <div class="note-content">
+        <h3>${n.title}</h3>
+        <a class="btn-download" href="${n.file}" download>Download</a>
+      </div>`;
+    notesContainer.appendChild(div);
+  });
+}
+
+// Admin upload
+document.getElementById("uploadBtn")?.addEventListener('click', () => {
+  const title = document.getElementById("noteTitle").value.trim();
+  const fileInput = document.getElementById("noteFile");
+  const imgURL = document.getElementById("noteImage").value.trim() || "https://images.unsplash.com/photo-1584697964154-4c5295df0475?auto=format&fit=crop&w=600&q=80";
+
+  if(!title || fileInput.files.length === 0){
+    alert("Please enter title and select a file.");
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const fileURL = URL.createObjectURL(file); // temporary URL for download
+
+  notes.push({title:title, file:fileURL, img:imgURL});
+  localStorage.setItem("notes", JSON.stringify(notes));
+
+  displayNotes();
+  alert("Note uploaded successfully!");
+
+  // reset inputs
+  document.getElementById("noteTitle").value = "";
+  fileInput.value = "";
+  document.getElementById("noteImage").value = "";
+});
+</script>
+
+</body>
+</html>
