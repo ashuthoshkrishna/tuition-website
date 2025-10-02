@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Notes to Google Drive</title>
+</head>
+<body>
+  <h2>Upload Notes</h2>
+  <button id="login">Login with Google</button><br><br>
+  <input type="file" id="noteFile" /><br><br>
+  <button id="upload">Upload to Drive</button>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script>
+    const CLIENT_ID = 'YOUR_CLIENT_ID_HERE'; // Replace with your actual Client ID
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+    function authenticate() {
+      return gapi.auth2.getAuthInstance()
+        .signIn({ scope: SCOPES })
+        .then(() => console.log("Signed in"));
+    }
+
+    function loadClient() {
+      return gapi.client.load("https://content.googleapis.com/discovery/v1/apis/drive/v3/rest")
+        .then(() => console.log("GAPI client loaded"));
+    }
+
+    document.getElementById('login').onclick = () => {
+      gapi.load("client:auth2", () => {
+        gapi.auth2.init({ client_id: CLIENT_ID }).then(authenticate).then(loadClient);
+      });
+    };
+
+    document.getElementById('upload').onclick = async () => {
+      const file = document.getElementById('noteFile').files[0];
+      if (!file) return alert("Please select a file first.");
+
+      const metadata = { name: file.name, mimeType: file.type };
+      const form = new FormData();
+      form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+      form.append("file", file);
+
+      const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+        method: "POST",
+        headers: new Headers({ Authorization: "Bearer " + gapi.auth.getToken().access_token }),
+        body: form
+      });
+
+      const data = await res.json();
+      alert("Uploaded: " + data.name);
+    };
+  </script>
+</body>
+</html>
